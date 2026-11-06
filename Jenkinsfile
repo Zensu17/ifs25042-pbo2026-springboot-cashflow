@@ -22,20 +22,9 @@ pipeline {
         // CHECKOUT
         // ============================================================
         stage('Checkout') {
-            agent {
-                docker {
-                    image 'alpine:3.21'
-                    reuseNode true
-                }
-            }
+            agent any
 
             steps {
-                sh '''
-                    set -e
-
-                    WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
-                    chown -R "$WORKSPACE_OWNER" .
-                '''
                 checkout scm
             }
         }
@@ -48,7 +37,7 @@ pipeline {
                 docker {
                     image 'eclipse-temurin:25-jdk'
                     reuseNode true
-                    args '-u root -v /var/jenkins_home/.m2:/var/jenkins_home/.m2'
+                    args '-u 1000:1000 -v /var/jenkins_home/.m2:/var/jenkins_home/.m2'
                 }
             }
 
@@ -81,12 +70,6 @@ pipeline {
 
             post {
                 always {
-                    sh '''
-                        set -e
-
-                        WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
-                        chown -R "$WORKSPACE_OWNER" .
-                    '''
                     junit(
                         allowEmptyResults: true,
                         testResults: 'target/surefire-reports/*.xml'
@@ -110,6 +93,7 @@ pipeline {
 
                     args '''
                         --entrypoint=""
+                        -u 1000:1000
                         -e HOME=/tmp
                         -e XDG_CACHE_HOME=/tmp/.cache
                         -v /var/jenkins_home/.m2:/var/jenkins_home/.m2
@@ -161,12 +145,6 @@ pipeline {
 
             post {
                 always {
-                    sh '''
-                        set -e
-
-                        WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
-                        chown -R "$WORKSPACE_OWNER" .
-                    '''
                     // failOnError must be false: otherwise Warnings NG can mark the
                     // whole build FAILURE while later stages still run (all green, badge red).
                     // Build failure on HIGH/CRITICAL comes from trivy --exit-code 1 above.
@@ -206,7 +184,9 @@ pipeline {
                     echo "======================================"
 
                     apt-get update -qq
-                    apt-get install -y -qq zip unzip git >/dev/null
+                    apt-get install -y -qq zip unzip git util-linux >/dev/null
+
+                    setpriv --reuid=1000 --regid=1000 --clear-groups -- sh -eu <<'PACKAGE'
 
                     rm -f latest-app.zip app.jar
 
@@ -232,18 +212,8 @@ pipeline {
 
                     echo "=== Package Content ==="
                     unzip -l latest-app.zip
+PACKAGE
                 '''
-            }
-
-            post {
-                always {
-                    sh '''
-                        set -e
-
-                        WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
-                        chown -R "$WORKSPACE_OWNER" .
-                    '''
-                }
             }
         }
 
