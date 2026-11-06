@@ -1,0 +1,10 @@
+target/
+.env
+.idea/
+*.iml
+node_modules/
+frontend/generated/
+package*.json
+vite*.ts
+tsconfig.json
+types.d.ts
