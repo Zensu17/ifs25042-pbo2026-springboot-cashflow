@@ -30,6 +30,14 @@ pipeline {
             }
 
             steps {
+                sh '''
+                    set -e
+
+                    # Docker build sebelumnya dapat meninggalkan file root-owned.
+                    # Ambil owner workspace dari mount host sebelum Git checkout.
+                    WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
+                    chown -R "$WORKSPACE_OWNER" .
+                '''
                 checkout scm
             }
         }
@@ -75,6 +83,12 @@ pipeline {
 
             post {
                 always {
+                    sh '''
+                        set -e
+
+                        WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
+                        chown -R "$WORKSPACE_OWNER" .
+                    '''
                     junit(
                         allowEmptyResults: true,
                         testResults: 'target/surefire-reports/*.xml'
