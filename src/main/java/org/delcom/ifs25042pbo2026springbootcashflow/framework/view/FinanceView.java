@@ -53,6 +53,8 @@ public class FinanceView extends VerticalLayout {
         this.useCase = useCase;
         this.presenter = presenter;
 
+        getElement().setAttribute("role", "main");
+        getElement().setAttribute("aria-label", "Cashflow pribadi");
         setSizeFull();
         setPadding(true);
         getStyle().set("background", "#0F172A").set("box-sizing", "border-box");
