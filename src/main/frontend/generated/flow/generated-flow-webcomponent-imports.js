@@ -22,6 +22,7 @@ import '@vaadin/horizontal-layout/src/vaadin-horizontal-layout.js';
 import '@vaadin/button/src/vaadin-button.js';
 import '@vaadin/icons/vaadin-iconset.js';
 import '@vaadin/icon/src/vaadin-icon.js';
+import 'Frontend/generated/jar-resources/vaadin-big-decimal-field.js';
 import '@vaadin/dialog/src/vaadin-dialog.js';
 import '@vaadin/notification/src/vaadin-notification.js';
 import '@vaadin/common-frontend/ConnectionIndicator.js';

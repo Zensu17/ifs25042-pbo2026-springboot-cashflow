@@ -202,7 +202,6 @@ public class FinanceView extends VerticalLayout {
         BigDecimalField amount = new BigDecimalField("Jumlah (Rp)");
         amount.setWidthFull();
         amount.setRequired(true);
-        amount.setMin(BigDecimal.ZERO);
 
         Dialog dialog = new Dialog();
         dialog.setWidth("420px");
