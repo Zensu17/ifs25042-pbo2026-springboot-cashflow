@@ -33,8 +33,6 @@ pipeline {
                 sh '''
                     set -e
 
-                    # Docker build sebelumnya dapat meninggalkan file root-owned.
-                    # Ambil owner workspace dari mount host sebelum Git checkout.
                     WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
                     chown -R "$WORKSPACE_OWNER" .
                 '''
@@ -163,6 +161,12 @@ pipeline {
 
             post {
                 always {
+                    sh '''
+                        set -e
+
+                        WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
+                        chown -R "$WORKSPACE_OWNER" .
+                    '''
                     // failOnError must be false: otherwise Warnings NG can mark the
                     // whole build FAILURE while later stages still run (all green, badge red).
                     // Build failure on HIGH/CRITICAL comes from trivy --exit-code 1 above.
@@ -229,6 +233,17 @@ pipeline {
                     echo "=== Package Content ==="
                     unzip -l latest-app.zip
                 '''
+            }
+
+            post {
+                always {
+                    sh '''
+                        set -e
+
+                        WORKSPACE_OWNER="$(stat -c '%u:%g' .)"
+                        chown -R "$WORKSPACE_OWNER" .
+                    '''
+                }
             }
         }
 
