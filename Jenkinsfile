@@ -12,8 +12,8 @@ pipeline {
     environment {
         MAVEN_OPTS = '-Xmx2g'
         JAVA_TOOL_OPTIONS = '-Dfile.encoding=UTF-8'
-        // Cache Maven per workspace; avoids shared file-lock conflicts.
-        MAVEN_LOCAL_REPO = '.jenkins-m2/repository'
+        // Cache Maven bersama di volume Jenkins, persist antar build/job (hindari 429)
+        MAVEN_LOCAL_REPO = '/var/jenkins_home/.m2/repository'
     }
 
     stages {
@@ -22,7 +22,12 @@ pipeline {
         // CHECKOUT
         // ============================================================
         stage('Checkout') {
-            agent any
+            agent {
+                docker {
+                    image 'alpine:3.21'
+                    reuseNode true
+                }
+            }
 
             steps {
                 checkout scm
@@ -37,7 +42,7 @@ pipeline {
                 docker {
                     image 'eclipse-temurin:25-jdk'
                     reuseNode true
-                    args '-u 1000:1000'
+                    args '-u root -v /var/jenkins_home/.m2:/var/jenkins_home/.m2'
                 }
             }
 
@@ -48,11 +53,8 @@ pipeline {
                     echo "=== Java Runtime ==="
                     java -version
 
-                    MAVEN_REPO="$PWD/$MAVEN_LOCAL_REPO"
-                    VAADIN_FRONTEND="$PWD/.vaadin-frontend"
-                    rm -rf "$VAADIN_FRONTEND"
                     chmod +x mvnw
-                    mkdir -p "$MAVEN_REPO"
+                    mkdir -p "$MAVEN_LOCAL_REPO"
 
                     if [ ! -f .env ]; then
                         cp .env.example .env
@@ -60,11 +62,10 @@ pipeline {
 
                     echo "=== Maven Clean Verify (Jacoco 100%) ==="
                     # verify = test + jacoco:check (instruction/branch/line/method/class = 100%)
-                    # Vaadin production assets are generated into target during this build.
+                    # -Pproduction = Vaadin frontend production build saat package
+                    # cache Maven persisten agar tidak download ulang (hindari 429 Maven Central)
                     ./mvnw -B clean verify -Pproduction \
-                        -Dvaadin.frontend.frontendFolder="$VAADIN_FRONTEND" \
-                        -Dvaadin.frontend.generatedFolder="$VAADIN_FRONTEND/generated" \
-                        -Dmaven.repo.local="$MAVEN_REPO"
+                        -Dmaven.repo.local="$MAVEN_LOCAL_REPO"
 
                     echo "=== Build & Tests Passed ==="
                     ls -lh target/*.jar || true
@@ -97,9 +98,9 @@ pipeline {
 
                     args '''
                         --entrypoint=""
-                        -u 1000:1000
                         -e HOME=/tmp
                         -e XDG_CACHE_HOME=/tmp/.cache
+                        -v /var/jenkins_home/.m2:/var/jenkins_home/.m2
                     '''
                 }
             }
@@ -110,10 +111,10 @@ pipeline {
 
                     mkdir -p .trivy-cache || true
 
-                    # Trivy Java analyzer reads the workspace Maven cache through ~/.m2.
-                    MAVEN_REPO="$PWD/$MAVEN_LOCAL_REPO"
+                    # Trivy Java analyzer membaca ~/.m2; HOME container = /tmp.
+                    # Arahkan ke cache Maven bersama yang persist di volume Jenkins.
                     mkdir -p /tmp/.m2
-                    ln -sfn "$MAVEN_REPO" /tmp/.m2/repository
+                    ln -sfn "$MAVEN_LOCAL_REPO" /tmp/.m2/repository
 
                     echo "======================================"
                     echo "        TRIVY SECURITY SCAN"
@@ -123,7 +124,7 @@ pipeline {
                     trivy --version
 
                     echo "=== Local Maven cache ==="
-                    ls -ld "$MAVEN_REPO" /tmp/.m2/repository || true
+                    ls -ld "$MAVEN_LOCAL_REPO" /tmp/.m2/repository || true
 
                     echo "=== Trivy Scan ==="
 
@@ -135,7 +136,6 @@ pipeline {
                         --skip-dirs target \
                         --skip-dirs .mvn \
                         --skip-dirs node_modules \
-                        --skip-dirs .jenkins-m2 \
                         --skip-dirs .trivy-cache \
                         --format sarif \
                         --output trivy-results.sarif \
@@ -188,9 +188,7 @@ pipeline {
                     echo "======================================"
 
                     apt-get update -qq
-                    apt-get install -y -qq zip unzip git util-linux >/dev/null
-
-                    setpriv --reuid=1000 --regid=1000 --clear-groups -- sh -eu <<'PACKAGE'
+                    apt-get install -y -qq zip unzip git >/dev/null
 
                     rm -f latest-app.zip app.jar
 
@@ -208,8 +206,7 @@ pipeline {
                     # ZIP bersih seperti hasil clone GitHub (hanya file tracked),
                     # lalu tambahkan JAR hasil build di target/ agar deploy zip
                     # berperilaku sama dengan deploy git.
-                    git -c safe.directory="$PWD" archive --format=zip --output=latest-app.zip HEAD -- . \
-                        ':(exclude)src/main/frontend'
+                    git -c safe.directory="$PWD" archive --format=zip --output=latest-app.zip HEAD
                     zip -q latest-app.zip "$JAR"
 
                     echo "=== Application Package Created ==="
@@ -217,7 +214,6 @@ pipeline {
 
                     echo "=== Package Content ==="
                     unzip -l latest-app.zip
-PACKAGE
                 '''
             }
         }

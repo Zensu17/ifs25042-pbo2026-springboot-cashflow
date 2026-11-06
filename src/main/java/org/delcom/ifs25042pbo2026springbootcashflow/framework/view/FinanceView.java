@@ -62,6 +62,7 @@ public class FinanceView extends VerticalLayout {
         configureToolbar();
         add(buildHeader(), buildSummaryCards(), buildToolbar(), statusLabel, grid);
         styleGridPanel();
+        setFlexGrow(1, grid);
         refreshAll();
     }
 
@@ -85,7 +86,7 @@ public class FinanceView extends VerticalLayout {
                 card("Transaksi", totalCount, "#1E293B", "#94A3B8", "#F1F5F9", 1.35, 1)
         );
         cards.setWidthFull();
-        cards.getStyle().set("align-items", "stretch");
+        cards.getStyle().set("align-items", "stretch").set("flex-wrap", "wrap").set("gap", "1rem");
         return cards;
     }
 
@@ -186,7 +187,8 @@ public class FinanceView extends VerticalLayout {
         toolbar.setWidthFull();
         toolbar.setFlexGrow(1, searchField);
         toolbar.setAlignItems(FlexComponent.Alignment.END);
-        toolbar.getStyle().set("background", "#F8FAFC").set("border-radius", "16px").set("padding", "0.75rem 1rem")
+        toolbar.getStyle().set("flex-wrap", "wrap").set("gap", "0.75rem")
+            .set("background", "#F8FAFC").set("border-radius", "16px").set("padding", "0.75rem 1rem")
                 .set("box-sizing", "border-box");
         return toolbar;
     }
@@ -196,8 +198,11 @@ public class FinanceView extends VerticalLayout {
     private void openAddDialog(TransactionType type) {
         TextField description = new TextField("Keterangan");
         description.setWidthFull();
+        description.setRequired(true);
         BigDecimalField amount = new BigDecimalField("Jumlah (Rp)");
         amount.setWidthFull();
+        amount.setRequired(true);
+        amount.setMin(BigDecimal.ZERO);
 
         Dialog dialog = new Dialog();
         dialog.setWidth("420px");
