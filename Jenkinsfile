@@ -12,7 +12,7 @@ pipeline {
     environment {
         MAVEN_OPTS = '-Xmx2g'
         JAVA_TOOL_OPTIONS = '-Dfile.encoding=UTF-8'
-        // Cache Maven per workspace; avoids stale shared file locks across jobs.
+        // Cache Maven per workspace; avoids shared file-lock conflicts.
         MAVEN_LOCAL_REPO = '.jenkins-m2/repository'
     }
 
@@ -49,6 +49,8 @@ pipeline {
                     java -version
 
                     MAVEN_REPO="$PWD/$MAVEN_LOCAL_REPO"
+                    VAADIN_FRONTEND="$PWD/.vaadin-frontend"
+                    rm -rf "$VAADIN_FRONTEND"
                     chmod +x mvnw
                     mkdir -p "$MAVEN_REPO"
 
@@ -58,9 +60,10 @@ pipeline {
 
                     echo "=== Maven Clean Verify (Jacoco 100%) ==="
                     # verify = test + jacoco:check (instruction/branch/line/method/class = 100%)
-                    # -Pproduction = Vaadin frontend production build saat package
-                    # Cache Maven per workspace agar tidak berbagi file lock antar job.
+                    # Vaadin production assets are generated into target during this build.
                     ./mvnw -B clean verify -Pproduction \
+                        -Dvaadin.frontend.frontendFolder="$VAADIN_FRONTEND" \
+                        -Dvaadin.frontend.generatedFolder="$VAADIN_FRONTEND/generated" \
                         -Dmaven.repo.local="$MAVEN_REPO"
 
                     echo "=== Build & Tests Passed ==="
@@ -107,7 +110,7 @@ pipeline {
 
                     mkdir -p .trivy-cache || true
 
-                    # Trivy Java analyzer membaca ~/.m2; arahkan ke cache workspace.
+                    # Trivy Java analyzer reads the workspace Maven cache through ~/.m2.
                     MAVEN_REPO="$PWD/$MAVEN_LOCAL_REPO"
                     mkdir -p /tmp/.m2
                     ln -sfn "$MAVEN_REPO" /tmp/.m2/repository
@@ -205,7 +208,8 @@ pipeline {
                     # ZIP bersih seperti hasil clone GitHub (hanya file tracked),
                     # lalu tambahkan JAR hasil build di target/ agar deploy zip
                     # berperilaku sama dengan deploy git.
-                    git -c safe.directory="$PWD" archive --format=zip --output=latest-app.zip HEAD
+                    git -c safe.directory="$PWD" archive --format=zip --output=latest-app.zip HEAD -- . \
+                        ':(exclude)src/main/frontend'
                     zip -q latest-app.zip "$JAR"
 
                     echo "=== Application Package Created ==="
