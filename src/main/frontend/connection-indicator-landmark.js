@@ -1,31 +1,24 @@
 (() => {
-  const applyLandmark = () => {
-    const indicator = document.querySelector('vaadin-connection-indicator');
-    if (!indicator) {
-      return false;
-    }
+	const applyLandmark = () => {
+		const indicator = document.querySelector('vaadin-connection-indicator');
+		if (!indicator) {
+			return false;
+		}
 
-    indicator.setAttribute('role', 'region');
-    indicator.setAttribute('aria-label', 'Status koneksi aplikasi');
-    return true;
-  };
+		indicator.setAttribute('role', 'region');
+		indicator.setAttribute('aria-label', 'Status koneksi aplikasi');
+		return true;
+	};
 
-  const observeIndicator = () => {
-    if (applyLandmark()) {
-      return;
-    }
+	if (applyLandmark()) {
+		return;
+	}
 
-    const observer = new MutationObserver(() => {
-      if (applyLandmark()) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-  };
+	const observer = new MutationObserver(() => {
+		if (applyLandmark()) {
+			observer.disconnect();
+		}
+	});
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', observeIndicator, { once: true });
-  } else {
-    observeIndicator();
-  }
+	observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
