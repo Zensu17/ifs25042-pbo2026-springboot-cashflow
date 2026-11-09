@@ -1,0 +1,51 @@
+import { injectGlobalWebcomponentCss } from 'Frontend/generated/jar-resources/theme-util.js';
+
+import '@vaadin/vertical-layout/src/vaadin-vertical-layout.js';
+import '@vaadin/grid/src/vaadin-grid.js';
+import '@vaadin/grid/src/vaadin-grid-column.js';
+import '@vaadin/grid/src/vaadin-grid-sorter.js';
+import '@vaadin/checkbox/src/vaadin-checkbox.js';
+import 'Frontend/generated/jar-resources/flow-component-renderer.js';
+import 'Frontend/generated/jar-resources/flow-component-directive.js';
+import 'lit';
+import 'Frontend/generated/jar-resources/vaadin-grid/gridConnector.ts';
+import '@vaadin/component-base/src/debounce.js';
+import '@vaadin/component-base/src/async.js';
+import '@vaadin/component-base/src/dom-utils.js';
+import '@vaadin/grid/src/vaadin-grid-active-item-mixin.js';
+import 'Frontend/generated/jar-resources/vaadin-grid/vaadin-grid-flow-selection-column.ts';
+import '@vaadin/grid/src/vaadin-grid-data-provider-mixin.js';
+import '@vaadin/grid/src/vaadin-grid-mixin.js';
+import '@vaadin/tooltip/src/vaadin-tooltip.js';
+import '@vaadin/grid/src/vaadin-grid-column-group.js';
+import 'Frontend/generated/jar-resources/lit-renderer.ts';
+import 'lit/directives/live.js';
+import '@vaadin/context-menu/src/vaadin-context-menu.js';
+import 'Frontend/generated/jar-resources/vaadin-context-menu/contextMenuConnector.ts';
+import 'Frontend/generated/jar-resources/vaadin-context-menu/contextMenuTargetConnector.ts';
+import '@vaadin/component-base/src/gestures.js';
+import 'Frontend/generated/jar-resources/disableOnClickFunctions.js';
+import '@vaadin/text-field/src/vaadin-text-field.js';
+import '@vaadin/select/src/vaadin-select.js';
+import '@vaadin/horizontal-layout/src/vaadin-horizontal-layout.js';
+import '@vaadin/button/src/vaadin-button.js';
+import '@vaadin/icons/vaadin-iconset.js';
+import '@vaadin/icon/src/vaadin-icon.js';
+import 'Frontend/generated/jar-resources/vaadin-big-decimal-field.js';
+import '@vaadin/component-base/src/define.js';
+import '@vaadin/dialog/src/vaadin-dialog.js';
+import '@vaadin/notification/src/vaadin-notification.js';
+import '@vaadin/common-frontend/ConnectionIndicator.js';
+import 'Frontend/generated/jar-resources/ReactRouterOutletElement.tsx';
+import 'react-router';
+import 'react';
+import 'Frontend/connection-indicator-landmark.js';
+const loadOnDemand = (key) => { return Promise.resolve(0); }
+window.Vaadin = window.Vaadin || {};
+window.Vaadin.Flow = window.Vaadin.Flow || {};
+window.Vaadin.Flow.loadOnDemand = loadOnDemand;
+window.Vaadin.Flow.resetFocus = () => {
+ let ae=document.activeElement;
+ while(ae&&ae.shadowRoot) ae = ae.shadowRoot.activeElement;
+ return !ae || ae.blur() || ae.focus() || true;
+}
